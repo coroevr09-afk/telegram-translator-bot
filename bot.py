@@ -6,7 +6,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from deep_translator import GoogleTranslator
 from aiohttp import web  # Импортируем для фейкового веб-сервера
 
-API_TOKEN = os.getenv("BOT_TOKEN")
+API_TOKEN = "7974964771:AAHi9YAJo-i9ss9vueZ1BowJTAEFTF5o6Ig"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
