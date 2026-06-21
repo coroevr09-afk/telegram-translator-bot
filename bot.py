@@ -1,11 +1,12 @@
-from aiogram import Bot, Dispatcher
+import os 
+import asyncio
+from aiogram import Bot, Dispatcher, Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram import Router, F
 from deep_translator import GoogleTranslator
-import asyncio
+from aiohttp import web  # Импортируем для фейкового веб-сервера
 
-API_TOKEN = "7974964771:AAHi9YAJo-i9ss9vueZ1BowJTAEFTF5o6Ig"
+API_TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -20,11 +21,8 @@ LANGS = {
     "ja": "🇯🇵 Японский"
 }
 
-# Сохраняем выбранный язык пользователя
 user_target_lang = {}
 
-
-# Клавиатура выбора языка
 def language_keyboard():
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -33,8 +31,6 @@ def language_keyboard():
         ]
     )
 
-
-# Кнопка смены языка
 def change_lang_button():
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -47,8 +43,6 @@ def change_lang_button():
         ]
     )
 
-
-# Команда /start
 @router.message(Command("start"))
 async def start(message: Message):
     await message.answer(
@@ -56,37 +50,27 @@ async def start(message: Message):
         reply_markup=language_keyboard()
     )
 
-
-# Выбор языка
 @router.callback_query(F.data.in_(LANGS.keys()))
 async def choose_language(callback):
     user_target_lang[callback.from_user.id] = callback.data
-
     await callback.message.answer(
         f"✅ Выбран язык: {LANGS[callback.data]}\n\n"
         "Теперь отправь текст — я сам определю язык"
     )
-
     await callback.answer()
 
-
-# Смена языка
 @router.callback_query(F.data == "change_lang")
 async def change_lang(callback):
     await callback.message.answer(
         "🌍 Выбери новый язык:",
         reply_markup=language_keyboard()
     )
-
     await callback.answer()
 
-
-# Перевод текста
 @router.message()
 async def translate(message: Message):
     user_id = message.from_user.id
 
-    # Если язык ещё не выбран
     if user_id not in user_target_lang:
         await message.answer(
             "Сначала выбери язык 👇",
@@ -111,9 +95,23 @@ async def translate(message: Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 
+async def handle(request):
+    return web.Response(text="Bot is running smoothly!")
+
 async def main():
+  
+    app = web.Application()
+    app.router.add_get('/', handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+   
+    port = int(os.getenv("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+  
     await dp.start_polling(bot)
 
-
-if __name__ == "__main__":
+if name == "main":  
     asyncio.run(main())
